@@ -1,0 +1,37 @@
+name: Build AI Passport Firmware
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build AI Passport
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v6.1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build firmware
+        shell: bash
+        run: |
+          source "$IDF_PATH/export.sh"
+          python scripts/build.py folotoy/ai-passport --name ai-passport
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-passport-custom-firmware
+          path: |
+            build/merged-binary.bin
+            build/bootloader/bootloader.bin
+            build/partition_table/partition-table.bin
+            build/xiaozhi.bin
+            build/ota_data_initial.bin
+          if-no-files-found: warn

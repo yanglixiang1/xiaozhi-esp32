@@ -1,12 +1,14 @@
 #ifndef _WEBSOCKET_PROTOCOL_H_
 #define _WEBSOCKET_PROTOCOL_H_
 
-
 #include "protocol.h"
 
 #include <web_socket.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
+#include <esp_timer.h>
+#include <atomic>
+#include <memory>
 
 #define WEBSOCKET_PROTOCOL_SERVER_HELLO_EVENT (1 << 0)
 
@@ -22,13 +24,18 @@ public:
     bool IsAudioChannelOpened() const override;
 
 private:
+    std::shared_ptr<std::atomic<bool>> alive_ = std::make_shared<std::atomic<bool>>(true);
     EventGroupHandle_t event_group_handle_;
     std::unique_ptr<WebSocket> websocket_;
     int version_ = 1;
+    esp_timer_handle_t reconnect_timer_ = nullptr;
+    esp_timer_handle_t ping_timer_ = nullptr;
 
     void ParseServerHello(const cJSON* root);
     bool SendText(const std::string& text) override;
     std::string GetHelloMessage();
+    void StartPingTimer();
+    void StopPingTimer();
 };
 
 #endif
